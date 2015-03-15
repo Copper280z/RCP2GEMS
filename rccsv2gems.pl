@@ -136,7 +136,7 @@ sub move_time_to_first_column {
 	my $timecolumn="null";
 	print "Initiating Moving Time Column to Front - Moves the Time column to the first column.\n";
 	for(my $i = 0; $i <= $#{$array[0]} ; $i++){
-		if ( $array[0][$i] =~ /Time/ ) {
+		if ( $array[0][$i] =~ /Utc/ ) {		#identifies the column that contains time, was originally "Time", but I don't see that in my logs
 			$timecolumn = $i;
 		}
 	}
@@ -153,11 +153,9 @@ sub move_time_to_first_column {
 }
 
 sub convert_time {
+	
 	my $time=$_[0];
-	(my $HHMMSS, my $ms) = split(/\./,$time);
-	my $date = Time::Piece->strptime($HHMMSS, "%H%M%S");
-	my $epoch_time = $date->epoch;
-	my $newtime = "$epoch_time.$ms";
+	my $newtime = $time / 1000;  # ver 2 firmware timestamp is UTC milliseconds already - tcm 21Jan15 
 	return $newtime;
 }
 
@@ -169,11 +167,11 @@ sub zero_start_time {  #resets the time columns value to start at 0 by subtracti
 	my $remove_column=($#{$array[0]} + 1);
 	print "Initiating Time Adjustment - Sets all times relative to the start time and converts times to seconds.\n";
 	for(my $i = 1; $i <= $#array ; $i++){
-		if ($array[$i][$remove_column] ne "remove"){
-		if (( looks_like_number($array[$i][0]) != 0 ) && ( $last_time > 230000 ) && ( $array[$i][0] < 100000 )){
+		if ($array[$i][$remove_column] ne "remove"){	#ignores rows tagged for removal
+		if (( looks_like_number($array[$i][0]) != 0 ) && ( $last_time > 230000 ) && ( $array[$i][0] < 100000 )){ #if it's a number, time from previous iteration is greater than 230000ms and current time is less than 100000
 			$pastmidnight="1";
 		}
-		if (( looks_like_number($array[$i][0]) != 0 ) && ($base_time == "null" )) {
+		if (( looks_like_number($array[$i][0]) != 0 ) && ($base_time == "null" )) { #if it's a number, and this is the first time entry
 			$last_time=$array[$i][0];
 			$base_time=convert_time($array[$i][0]);
 			$array[$i][0]="0.000";
@@ -330,7 +328,7 @@ sub clean_gps_for_sats { # processes data removing any lines where GPS Sats are 
 	my $remove_column=($#{$array[0]} + 1);
 	print "Initiating GPS Cleanup - Removing lat/long when GpsSats is less than minimum of $minimum_sats:\n";
 	for(my $i = 0; $i <= $#{$array[0]} ; $i++){
-		if ( $array[0][$i] =~ /GpsSats/ ) {
+		if ( $array[0][$i] =~ /GPSSats/ ) {
 			$gpssats_column="$i";
 		}
 		if ( $array[0][$i] =~ /Latitude/ ) {
@@ -492,7 +490,7 @@ sub main {
 				}
 			}
 		
-			print OUTFILE "\r\n";
+			print OUTFILE "\r";
 		}
         }
 
@@ -504,5 +502,3 @@ sub main {
 }
 
 main;
-
-
