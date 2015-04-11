@@ -168,38 +168,38 @@ sub zero_start_time {  #resets the time columns value to start at 0 by subtracti
 	print "Initiating Time Adjustment - Sets all times relative to the start time and converts times to seconds.\n";
 	for(my $i = 1; $i <= $#array ; $i++){
 		if ($array[$i][$remove_column] ne "remove"){	#ignores rows tagged for removal
-		if (( looks_like_number($array[$i][0]) != 0 ) && ( $last_time > 230000 ) && ( $array[$i][0] < 100000 )){ #if it's a number, time from previous iteration is greater than 230000ms and current time is less than 100000
-			$pastmidnight="1";
-		}
-		if (( looks_like_number($array[$i][0]) != 0 ) && ($base_time == "null" )) { #if it's a number, and this is the first time entry
-			$last_time=$array[$i][0];
-			$base_time=convert_time($array[$i][0]);
-			$array[$i][0]="0.000";
-			
-		}
-		else {
-			if ( looks_like_number($array[$i][0]) != 0 ) {
-				if ( $array[$i][0] < 100000) {
-					if ( $array[$i][0] < 10 ) {
-							$array[$i][0]="00000$array[$i][0]";
-					} elsif ( $array[$i][0] < 100 ) {
-                                                        $array[$i][0]="0000$array[$i][0]";
-					} elsif ( $array[$i][0] < 1000 ) {
-                                                        $array[$i][0]="000$array[$i][0]";
-                                        } elsif ( $array[$i][0] < 10000 ) {
-                                                        $array[$i][0]="00$array[$i][0]";
-                                        } else { $array[$i][0] = "0$array[$i][0]";
-					}
-					
-				}
-				my $converted_time = convert_time($array[$i][0]);
-				if ( $pastmidnight == "1" ) {
-					$converted_time+=86400;
-				}	
-				my $diff=($converted_time - $base_time);
-				$array[$i][0]=sprintf"%.3f",$diff;
+			if (( looks_like_number($array[$i][0]) != 0 ) && ( $last_time > 230000 ) && ( $array[$i][0] < 100000 )){ #if it's a number, time from previous iteration is greater than 230000ms and current time is less than 100000
+				$pastmidnight="1";
 			}
-		}
+			if (( looks_like_number($array[$i][0]) != 0 ) && ($base_time == "null" )) { #if it's a number, and this is the first time entry
+				$last_time=$array[$i][0];
+				$base_time=convert_time($array[$i][0]);
+				$array[$i][0]="0.000";
+			
+			}
+			else {
+				if ( looks_like_number($array[$i][0]) != 0 ) {
+					if ( $array[$i][0] < 100000) {
+						if ( $array[$i][0] < 10 ) {
+								$array[$i][0]="00000$array[$i][0]";
+						} elsif ( $array[$i][0] < 100 ) {
+								$array[$i][0]="0000$array[$i][0]";
+						} elsif ( $array[$i][0] < 1000 ) {
+								$array[$i][0]="000$array[$i][0]";
+						} elsif ( $array[$i][0] < 10000 ) {
+								$array[$i][0]="00$array[$i][0]";
+						} else { $array[$i][0] = "0$array[$i][0]";
+						}
+					
+					}
+					my $converted_time = convert_time($array[$i][0]);
+					if ( $pastmidnight == "1" ) {
+						$converted_time+=86400;
+					}	
+					my $diff=($converted_time - $base_time);
+					$array[$i][0]=sprintf"%.3f",$diff;
+				}
+			}
 		}
 	}
 	if ($base_time == "null"){
@@ -360,6 +360,7 @@ sub init_pre_gps_data { # finds the first numerical and non-zero lat/long values
         my $lat_col="null";
         my $long_col="null";
         my $remove_column=($#{$array[0]} + 1);
+        my $array_length = $#array;
         print "Initiating Pre-GPS initialization - Finds the first real gps lat/long values then sets all prior lat/long to match.\n";
         for(my $i = 0; $i <= $#{$array[0]} ; $i++){
                 if ( $array[0][$i] =~ /Longitude/ ) {
@@ -369,11 +370,14 @@ sub init_pre_gps_data { # finds the first numerical and non-zero lat/long values
                         $lat_col = $i;
                 }
         }
+        
+        print "array length $#array\n";
         my $i=1;
-        while ((((looks_like_number($array[$i][$long_col]) == 0) || (looks_like_number($array[$i][$lat_col]) == 0) || (($array[$i][$long_col] == 0 ) && ($array[$i][$lat_col] == 0)) || ($array[$i][$remove_column] eq "remove"))) && ($i <= $#array)) {
+        while ((((looks_like_number($array[$i][$long_col]) == 0) || (looks_like_number($array[$i][$lat_col]) == 0) || (($array[$i][$long_col] == 0 ) && ($array[$i][$lat_col] == 0)) || ($array[$i][$remove_column] eq "remove"))) && ($i <= $array_length) ){
                 $i++;
         }
-	if ($i > $#array) {
+        
+	if ($i > $array_length) {
 		print "Did not find any valid gps data!\n";
 	}
 	else {
